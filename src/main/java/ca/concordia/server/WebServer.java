@@ -120,7 +120,7 @@ public class WebServer {
             }
         }
 
-        // Create the response
+        // Create response
         String responseContent = "<html><body><h1>Thank you for using Concordia Transfers</h1>" +
                 "<h2>Received Form Inputs:</h2>"+
                 "<p>Account: " + account + "</p>" +
