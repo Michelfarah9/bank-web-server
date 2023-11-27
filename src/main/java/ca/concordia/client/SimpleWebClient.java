@@ -5,7 +5,21 @@ import java.net.*;
 
 public class SimpleWebClient {
 
-    public static void main(String[] args)  {
+    public static void main(String[] args) {
+        try {
+            // The number of requests you want to send
+            int numberOfRequests = 100;
+
+            for (int i = 0; i < numberOfRequests; i++) {
+                sendRequest();
+                Thread.sleep(1); // Pause for 5000 milliseconds between requests
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void sendRequest() {
         try {
             // Establish a connection to the server
             Socket socket = new Socket("localhost", 5000);
@@ -17,8 +31,8 @@ public class SimpleWebClient {
             PrintWriter writer = new PrintWriter(new OutputStreamWriter(out));
 
             // Prepare the POST request with form data
-            String postData = "account=1234&value=1000&toAccount=5678&toValue=500";
-            Thread.sleep(60000);
+            String postData = "account=321&value=10&toAccount=123&toValue=10";
+
             // Send the POST request
             writer.println("POST /submit HTTP/1.1");
             writer.println("Host: localhost:8080");
@@ -44,8 +58,6 @@ public class SimpleWebClient {
             socket.close();
 
         } catch (IOException e) {
-            e.printStackTrace();
-        }catch(InterruptedException e){
             e.printStackTrace();
         }
     }
