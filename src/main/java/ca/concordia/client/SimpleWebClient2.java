@@ -60,11 +60,12 @@ public class SimpleWebClient2 implements Runnable {
 
         }
     }
-
-    public static void main(String[] args) {
+    // Main method to create threads
+    public static void main(String[] args) throws InterruptedException {
         //create 1000 clients
-        for(int i = 0; i < 200; i++){
+        for(int i = 0; i < 1000; i++){
             Thread thread = new Thread(new SimpleWebClient2());
+            Thread.sleep(1);
             thread.start();
         }
     }

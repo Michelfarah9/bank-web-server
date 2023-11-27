@@ -15,6 +15,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+// Michel Farah
+// Harout Kayabalian
+
 public class WebServer {
     // ExecutorService for managing the thread pool
     private final Semaphore requestSemaphore = new Semaphore(200);
@@ -67,58 +70,47 @@ public class WebServer {
     }
 
     // Method to process a transfer between accounts
-    private void processTransfer(String sourceAccount, int sourceValue, String destAccount, int destValue, OutputStream out) {
-        int sourceAccountId = Integer.parseInt(sourceAccount);
-        int destAccountId = Integer.parseInt(destAccount);
-
-        // Use compute method for atomic update of source account
-        accounts.compute(sourceAccountId, (id, source) -> {
-            if (source == null) {
-                try {
-                    sendError(out, "Source account does not exist");
-                } catch (IOException e) {
-                    e.printStackTrace(); // Handle or log the exception as needed
-                }
-                return null;
-            }
-
-            if (source.getBalance() < sourceValue) {
-                try {
-                    sendError(out, "Insufficient funds in the source account");
-                } catch (IOException e) {
-                    e.printStackTrace(); // Handle or log the exception as needed
-                }
-                return null;
-            }
-
-            source.withdraw(sourceValue);
-            return source;
-        });
-
-        // If compute returns null, the transfer failed
-        if (accounts.computeIfPresent(destAccountId, (id, dest) -> {
-            if (dest == null) {
-                try {
-                    sendError(out, "Destination account does not exist");
-                } catch (IOException e) {
-                    e.printStackTrace(); // Handle or log the exception as needed
-                }
-                return null;
-            }
-
-            dest.deposit(destValue);
-            return dest;
-        }) == null) {
-            // The destination account did not exist, so we already sent an error
-            return;
-        }
-
-        System.out.println("Transfer successful");
-        printBalances();
+    private void processTransfer(String sourceAccount, int sourceValue, String destAccount, int destValue, OutputStream out) throws IOException {
+        transferLock.lock();
         try {
+            // Convert account numbers to integers
+            int sourceAccountId = Integer.parseInt(sourceAccount);
+            int destAccountId = Integer.parseInt(destAccount);
+
+            // Get source and destination accounts
+            Account source = accounts.get(sourceAccountId);
+            Account dest = accounts.get(destAccountId);
+
+            // Check if accounts exist
+            if (source == null || dest == null) {
+                sendError(out, "One or more accounts do not exist");
+                return;
+            }
+
+            // Print current balances before transfer
+            System.out.println("Before Transfer:");
+            printBalances();
+
+            // Check if there are sufficient funds in the source account
+            if (source.getBalance() < sourceValue) {
+                sendError(out, "Insufficient funds in the source account");
+                return;
+            }
+
+            // Perform the fund transfer
+            source.withdraw(sourceValue);
+            dest.deposit(destValue);
+
+            // Print updated balances after transfer
+            System.out.println("After Transfer:");
+            printBalances();
+
+            // Send success response
             sendSuccess(out, "Transfer successful");
-        } catch (IOException e) {
-            e.printStackTrace(); // Handle or log the exception as needed
+        } catch (NumberFormatException e) {
+            sendError(out, "Invalid account number format");
+        } finally {
+            transferLock.unlock();
         }
     }
 
